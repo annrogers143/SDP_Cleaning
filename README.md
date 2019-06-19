@@ -2,7 +2,7 @@
 For GitKraken testing purposes
 
 
-local CCRX NGR6
+local CCRX NGR7
 local round Round6
 local today=c(current_date)
 local c_today= "`today'"
@@ -11,5 +11,5 @@ local todaystata=clock("`today'", "DMY")
 
 
 LOOK AT ALL THESE UPDATES I CAN PUSH
-UPDATE1 
-smething ehree
+
+MERGE CONFLICT !!!
