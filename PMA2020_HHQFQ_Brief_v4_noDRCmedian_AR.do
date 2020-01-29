@@ -17,7 +17,7 @@
 *  PURPOSE:			Generate the .xls output for the PMA2020 2-Page Brief
 *  CREATED BY: 		Elizabeth Larson (elarso11@jhu.edu)
 *  ADAPTED FROM: 	Linnea Zimmerman's PMA_HHQFQ_2Page_Analysis_$date.do
-*  DATA IN:			PMA's publicly relased dataset
+*  DATA IN:			PMA's publicly released dataset
 *  DATA OUT: 		PMA2020_COUNTRY_ROUND_HHQFQ_2Page_Analysis_DATE.dta
 *  FILE OUT: 		PMA2020_COUNTRY_ROUND_HHQFQ_2Page_Analysis_DATE.xls
 *  LOG FILE OUT: 	PMA2020_COUNTRY_ROUND_HHQFQ_2Page_Log_DATE.log
@@ -53,7 +53,7 @@ numlabel, add
 *******************************************************************************
 * SECTION 1: SET DIRECTORIES AND DATASET
 *
-* You will need to set up the macro for the dataset dataset. Additionally, you 
+* You will need to set up the macro for the dataset directory. Additionally, you 
 *   will need to set up one directory for where you want to save your Excel 
 *   output. For the .do file to run correctly, all macros need to be contained
 * 	in quotation marks ("localmacro"):
@@ -63,7 +63,7 @@ numlabel, add
 *		- For example (Mac): 
 *		  local datadir "/User/ealarson/Desktop/PMA2020/PMA2018_NGR5_National_HHQFQ_v5_4Nov2019"
 *		- For example (PC):
-* 		  local datadir 
+* 		  local datadir "C:\Users\annro\PMA2020\PMA2018_NGR5_National_HHQFQ_v5_4Nov2019.dta"
 local datadir "insert dataset and its location here"
 
 *	2. A directory for the folder where you want to save the dataset, xls and
@@ -71,7 +71,7 @@ local datadir "insert dataset and its location here"
 *		- For example (Mac): 
 *		  local briefdir "/User/ealarson/Desktop/PMA2020/NigeriaAnalysisOutput"
 *		- For example (PC): 
-*		  local briefdir
+*		  local briefdir "C:\Users\annro\PMA2020\NigeriaAnalysisOutput"
 local briefdir "insert location for data output here"
 
 
@@ -109,7 +109,7 @@ local round "insert round here"
 local weight "insert weight here"
 
 *	4. The wealth local macro should be the wealth variable that is used for
-*		analyzing the data. Generally, it will be eigher "wealthquintile" or 
+*		analyzing the data. Generally, it will be either "wealthquintile" or 
 *		"wealthtertile", however for certain geographies, such as Nigeria, you 
 *		will need to specify the wealth for the specific geography that you are
 *		analyzing. You can identify the correct wealth by searching for
@@ -198,7 +198,7 @@ restore
 
 * Use female data to show female response rates
 
-* 	If using an earlier version2 of the PMA2020 survey, generate the variable 
+* 	If using an earlier version of the PMA2020 survey, generate the variable 
 *	last_night to identify eligible women
 	capture confirm var usual_member
 	if _rc==0 {
@@ -231,7 +231,7 @@ restore
 keep if FRS_result==1 & HHQ_result==1
 keep if last_night==1
 
-* Save data set so can replicate analysis results later
+* Save dataset so can replicate analysis results later
 save "PMA2020_`country'_`round'_HHQFQ_2Page_Analysis_`date'.dta", replace
 
 
@@ -369,9 +369,9 @@ drop FQdoi_correctedSIFdate FQdoi_correctedmonth FQdoi_correctedyear
 ****************************************
 * TIME SINCE LAST BIRTH
 	
-* Generate day, month and year variables from teh recent_birthSIF variable
-gen recent_birthSIFdate=dofc(FQdoi_correctedSIF)
-	format recent_birthSIFdate %d
+* Generate day, month and year variables from the recent_birthSIF variable
+gen recent_birthSIFdate=dofc(recent_birthSIF)
+	format recent_birthSIFdate %td
 gen recent_birthmonth=month(recent_birthSIFdate)
 gen recent_birthyear=year(recent_birthSIFdate)
 
@@ -453,7 +453,7 @@ label values unintend unintendl
 * CHOICE
 
 * Generate dichotomous variable for whether the woman chose the method herself
-*	or gointly with her partner or provider
+*	or jointly with her partner or provider
 gen methodchosen=1 if fp_final_decision==1 | fp_final_decision==4 | fp_final_decision==5
 	replace methodchosen=0 if fp_final_decision==2 | fp_final_decision==3
 	replace methodchosen=0 if fp_final_decision==-99 | fp_final_decision==6 
@@ -635,10 +635,12 @@ use "PMA2020_`country'_`round'_HHQFQ_2Page_Analysis_`date'.dta", clear
 *			and needs to be generated
 		if country=="CD" & round==1 {
 			gen husband_cohabit_start_firstSIF=FQSubmissionDateSIF
+			gen husband_cohabit_start_recentSIF=FQSubmissionDateSIF
 			}
 		gen husband_firstSIFdate=dofc(husband_cohabit_start_firstSIF)
-
-*		Birth - birthdateSIF variable doe snot exist in DRC Round 1, and needs
+		gen husband_recentSIFdate=dofc(husband_cohabit_start_recentSIF)
+		
+*		Birth - birthdateSIF variable does not exist in DRC Round 1, and needs
 *			to be generated
 		if country=="CD" & round==1 {
 			gen birthdateSIF=recent_birthSIF
@@ -655,6 +657,7 @@ use "PMA2020_`country'_`round'_HHQFQ_2Page_Analysis_`date'.dta", clear
 		gen firstmarriagemonth=month(husband_firstSIFdate)
 		gen firstmarriageyear=year(husband_firstSIFdate)
 		gen marriagecmc=(firstmarriageyear-1900)*12+firstmarriagemonth
+		replace marriagecmc=(year(husband_recentSIFdate)-1900)*12+month(husband_recentSIFdate) if marriage_history==1
 		gen agemarriage=(marriagecmc-v011)/12
 			label variable agemarriage "Age at first marriage (25 to 49 years)"
 	
@@ -780,7 +783,7 @@ save tem, replace
 * 	Median age at first birth among all women who have ever given birth. In older 
 *		rounds of the PMA2020 survey, the variable "birth_events" was used to 
 *		identify whether a women had given birth, contrastingly in newer rounds 
-*		of the PMA2020 survey, the variable birth_events was used.
+*		of the PMA2020 survey, the variable ever_birth was used.
 	preserve
 	capture confirm var ever_birth
 	if _rc!=0 {
@@ -846,7 +849,7 @@ label variable birth18 "Birth by age 18 (18-24)"
 * Recode age at first use variable. In older rounds of the PMA2020 survey, the 
 *	variable "birth_events" was used to identify whether a women had given birth, 
 *	contrastingly in newer rounds of the PMA2020 survey, the variable 
-*	birth_events was used.
+*	ever_birth was used.
 capture confirm var ever_birth
 if _rc!=0 {
 	replace age_at_first_use_children=0 if fp_ever_used==1 & birth_events==0
